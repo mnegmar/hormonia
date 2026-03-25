@@ -36,13 +36,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .bot-msg b, .bot-msg strong { color: var(--main-color); font-weight: 700; }
-        
-        .error-msg {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-
+        .error-msg { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #f472b6; border-radius: 10px; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -52,7 +46,6 @@
 <body class="font-sans">
 
     <div class="flex flex-col h-screen max-w-5xl mx-auto border-x border-gray-100 shadow-2xl">
-        <!-- Header -->
         <header class="bg-pink-600 p-4 text-white flex items-center justify-between shrink-0">
             <div class="flex items-center gap-4">
                 <div class="bg-white p-2 rounded-xl flex items-center justify-center w-11 h-11 shadow-md">
@@ -63,52 +56,46 @@
                     <p class="text-[11px] opacity-90 m-0 uppercase font-medium tracking-widest text-pink-100">Aprendizaje Basado en Manual</p>
                 </div>
             </div>
-            <button onclick="clearChat()" class="hover:bg-pink-700 p-2 rounded-full transition-colors" title="Limpiar chat">
+            <button onclick="clearChat()" class="hover:bg-pink-700 p-2 rounded-full transition-colors">
                 <i class="fas fa-sync-alt text-white opacity-80"></i>
             </button>
         </header>
 
-        <!-- Chat Area -->
         <div id="chat-box" class="chat-container overflow-y-auto p-5 flex flex-col gap-2">
             <div class="bot-msg message-bubble shadow-sm border-pink-100 border">
-                ¡Hola! Soy <b>HormonIA</b>. Estoy lista para ayudarte con el manual del <b>Sistema Endocrino Humano</b>. 
+                ¡Hola! Soy <b>HormonIA</b>. Ya tengo mi configuración lista. 
                 <br><br>
-                ¿Quieres que revisemos cómo influye la <b>insulina</b> en el envejecimiento o por qué el <b>cortisol</b> afecta a los tratamientos de cabina?
+                ¿En qué parte del <b>Sistema Endocrino</b> quieres profundizar hoy? Puedo explicarte la relación entre el <b>cortisol</b> y la inflamación cutánea o cómo actúan los <b>estrógenos</b>.
             </div>
         </div>
 
-        <!-- Input Area -->
         <div class="p-4 bg-white border-t border-gray-200 shrink-0">
             <div class="flex gap-3 items-center">
                 <input type="text" id="user-input" autocomplete="off"
                        class="flex-1 border-2 border-pink-50 rounded-2xl px-5 py-3 focus:outline-none focus:border-pink-300 text-sm transition-all bg-gray-50 focus:bg-white" 
-                       placeholder="Escribe tu consulta sobre el manual aquí...">
+                       placeholder="Escribe tu consulta aquí...">
                 <button onclick="sendMessage()" id="send-btn"
-                        class="bg-pink-600 text-white rounded-2xl px-5 py-3 flex items-center justify-center hover:bg-pink-700 transition active:scale-95 shadow-lg shadow-pink-200">
+                        class="bg-pink-600 text-white rounded-2xl px-5 py-3 flex items-center justify-center hover:bg-pink-700 transition shadow-lg shadow-pink-200">
                     <i class="fas fa-paper-plane mr-2 text-xs"></i>
-                    <span class="text-xs font-bold uppercase tracking-wider text-white">Enviar</span>
+                    <span class="text-xs font-bold uppercase tracking-wider">Enviar</span>
                 </button>
             </div>
-            <div class="text-[10px] text-center text-gray-400 mt-3 font-medium uppercase tracking-widest">Recurso para alumnas de 1º Estética Integral</div>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURACIÓN ---
-        // PEGA TU CLAVE DE GOOGLE AI STUDIO ENTRE LAS COMILLAS ABAJO:
+        // CONFIGURACIÓN INTEGRADA
         const apiKey = "AIzaSyBIlnAK8Y0EKZwzlLs2NmOiPjh1EEPB9r0"; 
 
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
 
-        const systemPrompt = `Eres HormonIA, una tutora virtual experta para alumnas de Estética Integral. Tu objetivo es explicar el Sistema Endocrino basándote en conocimientos profesionales.
-        
-        REGLAS DE RESPUESTA:
-        - NO uses Markdown (evita asteriscos y almohadillas).
-        - Usa SOLO etiquetas HTML: <b> para resaltar conceptos técnicos y <br> para saltos de línea.
-        - Enfoque: Relación de las glándulas con la piel (acné, manchas, envejecimiento, cortisol, insulina).
-        - Sé profesional, clara y muy didáctica.
-        - Si mencionas patologías, recuerda siempre derivar al endocrinólogo.`;
+        const systemPrompt = `Eres HormonIA, una tutora experta para alumnas de Estética. 
+        REGLAS:
+        - NUNCA uses Markdown (sin asteriscos).
+        - Usa SOLO <b> para negrita y <br> para saltos de línea.
+        - Sé clara y profesional.
+        - Relaciona hormonas con tratamientos estéticos.`;
 
         async function sendMessage() {
             const query = userInput.value.trim();
@@ -120,30 +107,19 @@
             const loadingId = addLoadingIndicator();
 
             try {
-                if (!apiKey || apiKey === "" || apiKey.length < 10) {
-                    throw new Error("API_KEY_MISSING");
-                }
-
                 const response = await fetchWithRetry(query);
                 removeLoadingIndicator(loadingId);
                 
                 if (response) {
-                    // Formateo de seguridad por si la IA usa markdown
                     let formatted = response
                         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                         .replace(/\*(.*?)\*/g, '<b>$1</b>')
-                        .replace(/#{1,6}\s?/g, '<b>')
                         .replace(/\n/g, '<br>');
-                    
                     appendMessage(formatted, 'bot-msg');
                 }
             } catch (error) {
                 removeLoadingIndicator(loadingId);
-                if (error.message === "API_KEY_MISSING") {
-                    appendMessage("<b>Configuración pendiente:</b> Debes insertar tu API Key en la línea 102 del archivo index.html para que el chat funcione.", 'bot-msg error-msg');
-                } else {
-                    appendMessage("<b>Error de conexión:</b> No he podido conectar con el manual. Por favor, reintenta en unos segundos.", 'bot-msg error-msg');
-                }
+                appendMessage("<b>Error:</b> No he podido conectar con el servicio. Por favor, asegúrate de estar usando la URL correcta e inténtalo de nuevo.", 'bot-msg error-msg');
             }
         }
 
@@ -184,7 +160,7 @@
             const div = document.createElement('div');
             div.id = id;
             div.className = 'bot-msg message-bubble italic text-gray-400 text-xs flex items-center';
-            div.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-3 text-pink-500"></i> HormonIA está consultando el manual...';
+            div.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-3 text-pink-500"></i> Consultando manual...';
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
             return id;
@@ -197,7 +173,7 @@
 
         function clearChat() {
             chatBox.innerHTML = '';
-            appendMessage("Historial borrado. <b>HormonIA</b> lista para nuevas dudas.", 'bot-msg');
+            appendMessage("Chat reiniciado. ¿En qué puedo ayudarte?", 'bot-msg');
         }
 
         userInput.addEventListener('keypress', (e) => {
