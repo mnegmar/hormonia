@@ -36,7 +36,8 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .bot-msg b, .bot-msg strong { color: var(--main-color); font-weight: 700; }
-        .error-msg { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .error-msg { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; font-size: 0.85rem; }
+        
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #f472b6; border-radius: 10px; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -63,9 +64,9 @@
 
         <div id="chat-box" class="chat-container overflow-y-auto p-5 flex flex-col gap-2">
             <div class="bot-msg message-bubble shadow-sm border-pink-100 border">
-                ¡Hola! Soy <b>HormonIA</b>. Ya tengo mi configuración lista. 
+                ¡Hola! Soy <b>HormonIA</b>. Estoy lista para ayudarte con el manual. 
                 <br><br>
-                ¿En qué parte del <b>Sistema Endocrino</b> quieres profundizar hoy? Puedo explicarte la relación entre el <b>cortisol</b> y la inflamación cutánea o cómo actúan los <b>estrógenos</b>.
+                ¿Qué duda tienes sobre el <b>Sistema Endocrino</b> y su impacto en la estética?
             </div>
         </div>
 
@@ -77,25 +78,29 @@
                 <button onclick="sendMessage()" id="send-btn"
                         class="bg-pink-600 text-white rounded-2xl px-5 py-3 flex items-center justify-center hover:bg-pink-700 transition shadow-lg shadow-pink-200">
                     <i class="fas fa-paper-plane mr-2 text-xs"></i>
-                    <span class="text-xs font-bold uppercase tracking-wider">Enviar</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-white">Enviar</span>
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN INTEGRADA
+        /**
+         * INSTRUCCIONES: 
+         * 1. Ve a https://aistudio.google.com/app/apikey
+         * 2. Copia tu API Key (empieza por AIza...)
+         * 3. Pégala entre las comillas de abajo:
+         */
         const apiKey = "AIzaSyBIlnAK8Y0EKZwzlLs2NmOiPjh1EEPB9r0"; 
 
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
 
-        const systemPrompt = `Eres HormonIA, una tutora experta para alumnas de Estética. 
+        const systemPrompt = `Eres HormonIA, una tutora experta para alumnas de Estética Integral. 
         REGLAS:
-        - NUNCA uses Markdown (sin asteriscos).
-        - Usa SOLO <b> para negrita y <br> para saltos de línea.
-        - Sé clara y profesional.
-        - Relaciona hormonas con tratamientos estéticos.`;
+        - NO uses Markdown (evita asteriscos).
+        - Usa SOLO etiquetas HTML básicas: <b> para resaltar conceptos y <br> para saltos de línea.
+        - Relaciona el sistema endocrino con la piel y tratamientos estéticos.`;
 
         async function sendMessage() {
             const query = userInput.value.trim();
@@ -119,7 +124,15 @@
                 }
             } catch (error) {
                 removeLoadingIndicator(loadingId);
-                appendMessage("<b>Error:</b> No he podido conectar con el servicio. Por favor, asegúrate de estar usando la URL correcta e inténtalo de nuevo.", 'bot-msg error-msg');
+                let errorText = "<b>Error de conexión:</b> No he podido contactar con el manual.";
+                
+                if (error.message.includes('403')) {
+                    errorText = "<b>Error de Clave (403):</b> Tu API Key parece no tener permisos o es incorrecta. Revísala en Google AI Studio.";
+                } else if (error.message.includes('400')) {
+                    errorText = "<b>Error de Clave (400):</b> La clave de API es inválida o está mal escrita.";
+                }
+                
+                appendMessage(errorText, 'bot-msg error-msg');
             }
         }
 
@@ -137,10 +150,16 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    if (!response.ok) throw new Error('API Error');
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`${response.status}: ${errorData.error?.message || 'Unknown'}`);
+                    }
+                    
                     const result = await response.json();
                     return result.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) {
+                    if (e.message.includes('403') || e.message.includes('400')) throw e;
                     if (i === retries - 1) throw e;
                     await new Promise(r => setTimeout(r, 1000));
                 }
@@ -160,7 +179,7 @@
             const div = document.createElement('div');
             div.id = id;
             div.className = 'bot-msg message-bubble italic text-gray-400 text-xs flex items-center';
-            div.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-3 text-pink-500"></i> Consultando manual...';
+            div.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-3 text-pink-500"></i> Consultando...';
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
             return id;
@@ -173,7 +192,7 @@
 
         function clearChat() {
             chatBox.innerHTML = '';
-            appendMessage("Chat reiniciado. ¿En qué puedo ayudarte?", 'bot-msg');
+            appendMessage("Historial borrado. ¿Qué quieres repasar hoy?", 'bot-msg');
         }
 
         userInput.addEventListener('keypress', (e) => {
